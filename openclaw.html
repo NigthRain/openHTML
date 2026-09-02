@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国产大模型及AI助手 ("变种小龙虾") 生态调研</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: 暖性中性色调 (Warm Neutrals) 搭配 沉稳蓝靛色 (Slate/Indigo Accents) -->
+    <!-- Application Structure Plan: 
+        1. 顶层导航与概览 (Hero & Navigation): 引入“变种小龙虾”概念，提供清晰的全局导航。
+        2. 市场生态全景图 (Ecosystem Landscape): 使用交互式卡片和过滤功能，让用户快速按公司类型（大厂、独角兽、第三方）浏览产品。
+        3. 核心维度分析：API开放性 (API Openness Analysis): 使用柱状图直观对比各家对第三方API的支持力度，配以详细文本解析其调用模式。
+        4. 详细参数对比矩阵 (Comparison Matrix): 提供数据表格，并支持点击穿透（Drill-down）查看单一产品的详细报告模态框。
+        *理由*: 这种从宏观生态到微观特性的渐进式结构（Dashboard模式），最适合处理多维度的比较分析报告，极大降低了用户的信息认知负荷。
+    -->
+    <!-- Visualization & Content Choices: 
+        1. 生态卡片 -> 目标: 组织与分类 -> 方法: HTML/CSS Flex Grid + JS 过滤 -> 理由: 清晰展示厂商归属，提供快速探索入口。
+        2. API开放度图表 -> 目标: 比较 -> 方法: Chart.js 水平柱状图 -> 理由: 直观呈现各平台在“闭源 vs 开放”光谱上的位置。
+        3. 对比表格 -> 目标: 组织与详情 -> 方法: 响应式 HTML Table + JS 模态框 -> 理由: 结构化呈现复杂文本，支持深入阅读而不离开当前页面。
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #fafaf9; /* Tailwind stone-50 */
+            color: #1c1917; /* Tailwind stone-900 */
+        }
+        
+        /* Chart Container Styling: 严格控制图表尺寸与响应式 */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+
+        /* 纯CSS图标/装饰图案 */
+        .css-icon-cube {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-color: #4f46e5;
+            border-radius: 4px;
+            transform: rotate(45deg);
+            margin-right: 8px;
+        }
+
+        .css-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-200 selection:text-indigo-900">
+
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 bg-stone-50/90 border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🦞</span>
+                    <span class="font-bold text-xl tracking-tight text-indigo-900">AI变种小龙虾洞察</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4" id="nav-links">
+                        <a href="#landscape" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">生态全景</a>
+                        <a href="#api-analysis" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">API与生态开放性</a>
+                        <a href="#comparison" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">核心对比矩阵</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-indigo-900 text-stone-50 py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-6">国产大模型及AI助手生态深度调研</h1>
+            <p class="mt-4 max-w-3xl text-lg md:text-xl text-indigo-200 mx-auto">
+                业界戏称当前快速进化、形态各异的AI产品为“变种小龙虾”。本报告聚焦互联网大厂（阿里、腾讯、百度、字节）、大模型独角兽（Kimi、MiniMax）及第三方厂商（猎豹等），深度剖析其产品矩阵、模型底座，以及<b>最核心的第三方API调用与自定义生态开放度</b>。
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <!-- 模块 1: 生态全景卡片 -->
+        <section id="landscape" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-stone-900 flex items-center">
+                    <span class="css-icon-cube"></span> 市场生态全景图
+                </h2>
+                <p class="mt-2 text-stone-600">
+                    本区域展示了当前主流国产AI产品阵营。您可以通过上方按钮过滤不同背景的厂商。点击下方“查看详情”可在底部矩阵中了解更多信息。
+                </p>
+            </div>
+
+            <!-- 过滤器 -->
+            <div class="flex flex-wrap gap-2 mb-8" id="filter-buttons">
+                <!-- 由JS动态生成 -->
+            </div>
+
+            <!-- 卡片网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="product-grid">
+                <!-- 由JS动态生成 -->
+            </div>
+        </section>
+
+        <!-- 模块 2: API与生态开放性图表分析 -->
+        <section id="api-analysis" class="scroll-mt-20 bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
+            <div class="mb-8 text-center">
+                <h2 class="text-2xl font-bold text-stone-900">第三方API与生态开放性深度解析</h2>
+                <p class="mt-4 text-stone-600 max-w-4xl mx-auto text-left">
+                    在这个环节，我们聚焦开发者和企业最关心的问题：“我能否在这个平台上接入自己或其他第三方的API？”。不同厂商基于自身战略，给出了完全不同的答卷。大厂倾向于打造Paas平台（如阿里百炼、百度千帆），而独角兽更倾向于闭环自身的模型能力。
+                </p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-12 items-center">
+                <!-- 图表容器 -->
+                <div class="w-full lg:w-1/2">
+                    <div class="chart-container">
+                        <canvas id="apiOpennessChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-4">开放度评分标准: 1(完全封闭) - 5(高度支持第三方/开源模型接入)</p>
+                </div>
+
+                <!-- 文本解析区 -->
+                <div class="w-full lg:w-1/2 space-y-6">
+                    <div class="bg-stone-50 p-5 rounded-xl border border-stone-100">
+                        <h3 class="font-bold text-indigo-800 text-lg mb-2">✦ 互联网大厂：平台级生态 (PaaS/Agent)</h3>
+                        <p class="text-sm text-stone-600 leading-relaxed">
+                            <b>阿里 (百炼) & 百度 (千帆)</b>：采用了极其开放的模型即服务(MaaS)战略。不仅提供自家通义/文心模型，平台本身直接内置支持调用Llama、Mistral等大量第三方开源模型的API，甚至允许企业部署自定义微调模型。<br><br>
+                            <b>字节 (扣子 Coze)</b>：在Agent层极度开放。虽然国内版大语言模型主要绑定“云雀/豆包”，但其<b>插件生态</b>允许开发者通过自定义API接入任何第三方服务（如外部搜索、数据库、甚至其他小模型API）。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-stone-50 p-5 rounded-xl border border-stone-100">
+                        <h3 class="font-bold text-indigo-800 text-lg mb-2">✦ 大模型独角兽：核心能力闭环</h3>
+                        <p class="text-sm text-stone-600 leading-relaxed">
+                            <b>Kimi (月之暗面) & MiniMax</b>：作为基础模型厂商，其核心商业模式是售卖自家模型的API（如Kimi的长文本API，MiniMax的ABAB模型）。因此，它们的官方工具和开发平台<b>通常不支持</b>开发者在框架内直接调用竞争对手（第三方）的LLM API。它们提供API给别人接，但不接入别人。
+                        </p>
+                    </div>
+
+                    <div class="bg-stone-50 p-5 rounded-xl border border-stone-100">
+                        <h3 class="font-bold text-indigo-800 text-lg mb-2">✦ 第三方厂商：灵活组装 (集成商)</h3>
+                        <p class="text-sm text-stone-600 leading-relaxed">
+                            <b>猎豹移动 (聚言/猎户星空)</b>：作为典型的企业级应用提供商，往往采取“混合模型”策略。平台高度支持自定义接入第三方API，甚至在底层根据不同任务路由到不同的开源/闭源模型，给予企业客户最大的灵活度。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 模块 3: 对比矩阵与详情 -->
+        <section id="comparison" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-stone-900 flex items-center">
+                    <span class="css-icon-cube"></span> 核心对比矩阵
+                </h2>
+                <p class="mt-2 text-stone-600">
+                    全面对比各家产品的核心底座、主打功能以及API调用规范。<b>点击表格行可查看详细的产品调研报告。</b>
+                </p>
+            </div>
+
+            <div class="overflow-x-auto shadow-sm ring-1 ring-black ring-opacity-5 rounded-lg">
+                <table class="min-w-full divide-y divide-stone-300">
+                    <thead class="bg-stone-100">
+                        <tr>
+                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-stone-900 sm:pl-6">厂商/公司</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-stone-900">核心产品/Agent</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-stone-900">底层大模型</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-stone-900">第三方API支持类型</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-200 bg-white" id="comparison-table-body">
+                        <!-- 由JS动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 模态框 (Modal) 用于展示详情 -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- 背景遮罩 -->
+        <div class="fixed inset-0 bg-stone-900 bg-opacity-75 transition-opacity" id="modal-backdrop"></div>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4" id="modal-content">
+                        <!-- 详情内容由JS动态注入 -->
+                    </div>
+                    <div class="bg-stone-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button type="button" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto transition-colors" id="close-modal-btn">
+                            关闭详情
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-stone-900 text-stone-400 py-8 text-center text-sm mt-12">
+        <p>&copy; 2026 AI 产品生态交互分析报告. 此为演示交互架构单页应用。</p>
+    </footer>
+
+    <!-- 应用逻辑 -->
+    <script>
+        // --- 核心数据 (Data Storage) ---
+        const reportData = [
+            {
+                id: 'alibaba',
+                company: '阿里 (Alibaba)',
+                type: '互联网大厂',
+                products: '通义千问 (C端) / 钉钉AI / 阿里云百炼 (B端平台)',
+                coreModel: '通义大模型家族 (Qwen)',
+                apiOpenLevel: 5, // 最高5
+                apiSupport: '高度支持。百炼平台内置大量第三方开源模型，支持企业自定义API。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：MaaS 基础设施</h4>
+                    <p class="mb-4 text-stone-600">阿里的战略最侧重于底座平台。通义千问在C端表现优异，但在B端，阿里云“百炼”大模型平台才是核心。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>自有API：</b> 提供极其丰富的通义模型API（文本、视觉、音频）。</li>
+                        <li><b>第三方模型集成：</b> 百炼平台原生地提供对 Llama, ChatGLM, Baichuan 等第三方开源大模型的托管和 API 调用支持。</li>
+                        <li><b>自定义工具(插件) API：</b> 允许开发者在构建Agent时，以 OpenAPI 规范接入企业自有的业务API系统。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'baidu',
+                company: '百度 (Baidu)',
+                type: '互联网大厂',
+                products: '文心一言 (C端) / 百度智能云千帆 (B端平台) / 灵境矩阵',
+                coreModel: '文心大模型 (ERNIE)',
+                apiOpenLevel: 4.5,
+                apiSupport: '平台级支持。千帆平台提供第三方模型支持及强大的插件自定义能力。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：双轮驱动 (C端助手 + B端PaaS)</h4>
+                    <p class="mb-4 text-stone-600">国内最早发布的重量级大模型产品。千帆平台是企业级落地的关键。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>自有API：</b> ERNIE系列模型通过千帆平台对外提供标准API。</li>
+                        <li><b>第三方模型接入：</b> 千帆大模型平台支持接入主流开源大模型，方便企业进行对比和混合部署。</li>
+                        <li><b>灵境矩阵/插件：</b> 百度的Agent开发平台支持通过零代码/低代码方式接入第三方数据API，使得“文心一言”可以调用外部工具。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'bytedance',
+                company: '字节跳动 (ByteDance)',
+                type: '互联网大厂',
+                products: '豆包 (C端) / 扣子 Coze (Agent平台) / 火山引擎',
+                coreModel: '云雀模型 / 豆包大模型家族',
+                apiOpenLevel: 4,
+                apiSupport: '插件生态极度丰富。允许用户自定义API工具节点，但国内版模型选择受限。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：全民AI智能体开发生态</h4>
+                    <p class="mb-4 text-stone-600">字节的“扣子(Coze)”是国内体验最好、普及度最高的Agent构建平台，而“豆包”则是国内DAU领先的C端产品。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>模型限制 (国内版)：</b> Coze国内版的核心底层模型通常锁定在字节自家的豆包模型或少量合规模型，<b>不能</b>直接将底座替换为如Kimi或第三方的商业API。</li>
+                        <li><b>第三方工具API (极度开放)：</b> Coze最强大的是其插件系统。允许开发者完全自定义配置第三方API（RESTful），将任何互联网服务或私有数据库变成大模型的工具。</li>
+                        <li><b>火山引擎API：</b> 提供企业级的底层模型API调用接口。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'tencent',
+                company: '腾讯 (Tencent)',
+                type: '互联网大厂',
+                products: '腾讯元宝 (C端) / 腾讯云TI平台',
+                coreModel: '混元大模型',
+                apiOpenLevel: 3.5,
+                apiSupport: '侧重私有化与生态内互通。云端提供第三方模型支持。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：全面融入腾讯生态圈</h4>
+                    <p class="mb-4 text-stone-600">相比其他大厂，腾讯更侧重于将大模型能力默默融入微信、腾讯文档、会议等现有产品中。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>云平台开放：</b> 腾讯云TI平台支持混元大模型API，并提供对开源模型的托管支持。</li>
+                        <li><b>元宝智能体生态：</b> 腾讯元宝App内支持创建智能体，支持接入外部网页和微信公众号数据，但在硬核的第三方API代码级接入方面，比字节Coze稍微保守。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'moonshot',
+                company: '月之暗面 (Moonshot)',
+                type: '大模型独角兽',
+                products: 'Kimi智能助手 / Kimi开放平台',
+                coreModel: 'Moonshot 大模型 (长文本领先)',
+                apiOpenLevel: 2,
+                apiSupport: '高度封闭的底层。专注于输出自家API，不支持在系统内集成外部LLM。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：极致的单点突破 (超长文本)</h4>
+                    <p class="mb-4 text-stone-600">国内大模型圈当红炸子鸡，以其200万字甚至更长的上下文处理能力闻名。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>完全自研，对外输出：</b> Moonshot开放平台为开发者提供兼容OpenAI格式的API接口。</li>
+                        <li><b>第三方API集成能力 (弱)：</b> 作为模型提供方，官方工具或Kimi智能助手本身，主要依赖自带的网络搜索。目前不主打类似Coze那样高度开放的自定义API插件市场。其战略是让别人通过API接入Kimi，而不是Kimi去套壳别人。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'minimax',
+                company: 'MiniMax',
+                type: '大模型独角兽',
+                products: '海螺AI / 星野 (情感陪伴)',
+                coreModel: 'ABAB大模型',
+                apiOpenLevel: 2,
+                apiSupport: '与Kimi类似，专注基础模型输出，闭环自身应用体系。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：全模态与情感陪伴</h4>
+                    <p class="mb-4 text-stone-600">国内估值极高的独角兽，其“星野”在情感陪伴赛道极具统治力，语音和多模态能力出色。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>API服务平台：</b> 提供语音、文本等多模态大模型API供企业调用。</li>
+                        <li><b>封闭式生态：</b> 官方C端产品(海螺AI/星野)完全使用自家的ABAB模型构建，不涉及接入第三方大模型的概念。针对开发者，也没有提供像大厂PaaS平台那样的混合模型调度服务。</li>
+                    </ul>
+                `
+            },
+            {
+                id: 'cheetah',
+                company: '猎豹移动/猎户星空',
+                type: '第三方厂商',
+                products: '聚言 (JuYan) 企业级AI应用平台',
+                coreModel: 'Orion大模型 + 混合模型路由',
+                apiOpenLevel: 4.5,
+                apiSupport: '极其灵活的企业级集成。全面拥抱甚至依赖第三方API进行能力增强。',
+                details: `
+                    <h4 class="font-bold text-lg mb-2">生态定位：企业级AI聚合与落地解决商</h4>
+                    <p class="mb-4 text-stone-600">不同于单纯“死磕”基础模型的厂商，猎户星空更偏向应用和落地，开源了百亿参数的Orion大模型，同时提供“聚言”这类企业级应用平台。</p>
+                    <h4 class="font-bold text-lg mb-2 text-indigo-700">模型与API调用方式：</h4>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-1">
+                        <li><b>混合调用大师：</b> 此类厂商的平台系统（如聚言）通常<b>原生支持极其丰富的自定义API</b>配置。为了解决企业诉求，它们往往允许企业客户自主输入各大厂（如文心、千问）甚至OpenAI的API Key进行混合使用。</li>
+                        <li><b>企业内网API对接：</b> 高度支持私有化部署并对接企业内部CRM、ERP等老旧系统API。</li>
+                    </ul>
+                `
+            }
+        ];
+
+        // --- 状态管理 (State Management) ---
+        const state = {
+            currentFilter: 'All',
+            types: ['All', '互联网大厂', '大模型独角兽', '第三方厂商']
+        };
+
+        // --- DOM 元素引用 ---
+        const els = {
+            filterButtons: document.getElementById('filter-buttons'),
+            productGrid: document.getElementById('product-grid'),
+            tableBody: document.getElementById('comparison-table-body'),
+            modal: document.getElementById('detail-modal'),
+            modalBackdrop: document.getElementById('modal-backdrop'),
+            modalContent: document.getElementById('modal-content'),
+            closeBtn: document.getElementById('close-modal-btn'),
+            chartCanvas: document.getElementById('apiOpennessChart')
+        };
+
+        let opennessChartInstance = null;
+
+        // --- 初始化与渲染逻辑 ---
+
+        function init() {
+            renderFilters();
+            renderGrid();
+            renderTable();
+            initChart();
+            setupEventListeners();
+        }
+
+        // 渲染过滤器按钮
+        function renderFilters() {
+            els.filterButtons.innerHTML = '';
+            state.types.forEach(type => {
+                const btn = document.createElement('button');
+                const isActive = type === state.currentFilter;
+                
+                btn.className = `px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                    isActive 
+                    ? 'bg-indigo-600 text-white border-indigo-600' 
+                    : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                }`;
+                btn.innerText = type === 'All' ? '全部厂商' : type;
+                
+                btn.onclick = () => {
+                    state.currentFilter = type;
+                    renderFilters(); // 更新按钮样式
+                    renderGrid();    // 更新网格
+                };
+                
+                els.filterButtons.appendChild(btn);
+            });
+        }
+
+        // 渲染卡片网格
+        function renderGrid() {
+            els.productGrid.innerHTML = '';
+            const filteredData = state.currentFilter === 'All' 
+                ? reportData 
+                : reportData.filter(d => d.type === state.currentFilter);
+
+            filteredData.forEach(item => {
+                // 颜色映射逻辑
+                let badgeClass = "bg-stone-100 text-stone-800";
+                if(item.type === '互联网大厂') badgeClass = "bg-blue-100 text-blue-800";
+                if(item.type === '大模型独角兽') badgeClass = "bg-purple-100 text-purple-800";
+                if(item.type === '第三方厂商') badgeClass = "bg-emerald-100 text-emerald-800";
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl p-6 shadow-sm border border-stone-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between h-full";
+                
+                // 将整个卡片区域绑定点击事件，展示模态框
+                card.onclick = () => openModal(item.id);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-stone-900">${item.company}</h3>
+                            <span class="css-badge ${badgeClass}">${item.type}</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-stone-500 font-semibold uppercase tracking-wider">核心产品</p>
+                                <p class="text-sm text-stone-800 font-medium">${item.products}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-stone-500 font-semibold uppercase tracking-wider">底层大模型</p>
+                                <p class="text-sm text-indigo-700 font-medium">${item.coreModel}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between text-indigo-600 text-sm font-semibold group">
+                        <span>查看详细评测</span>
+                        <span class="transform group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                `;
+                els.productGrid.appendChild(card);
+            });
+        }
+
+        // 渲染对比表格
+        function renderTable() {
+            els.tableBody.innerHTML = '';
+            reportData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 cursor-pointer transition-colors";
+                tr.onclick = () => openModal(item.id);
+                
+                tr.innerHTML = `
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-stone-900 sm:pl-6">
+                        ${item.company}
+                        <div class="text-xs text-stone-500 mt-0.5">${item.type}</div>
+                    </td>
+                    <td class="px-3 py-4 text-sm text-stone-700 max-w-xs truncate" title="${item.products}">${item.products}</td>
+                    <td class="px-3 py-4 text-sm text-stone-700"><span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md border border-indigo-100">${item.coreModel}</span></td>
+                    <td class="px-3 py-4 text-sm text-stone-600 max-w-sm truncate" title="${item.apiSupport}">${item.apiSupport}</td>
+                `;
+                els.tableBody.appendChild(tr);
+            });
+        }
+
+        // 初始化 Chart.js
+        function initChart() {
+            // 按开放度排序以展示更好看的图表
+            const sortedData = [...reportData].sort((a, b) => b.apiOpenLevel - a.apiOpenLevel);
+            
+            const labels = sortedData.map(d => d.company.split(' ')[0]);
+            const values = sortedData.map(d => d.apiOpenLevel);
+            
+            // 动态颜色：大厂蓝，独角兽紫，第三方绿
+            const bgColors = sortedData.map(d => {
+                if(d.type === '互联网大厂') return 'rgba(59, 130, 246, 0.7)'; // blue-500
+                if(d.type === '大模型独角兽') return 'rgba(168, 85, 247, 0.7)'; // purple-500
+                return 'rgba(16, 185, 129, 0.7)'; // emerald-500
+            });
+            const borderColors = bgColors.map(c => c.replace('0.7', '1'));
+
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '生态第三方API接入开放度评估 (1-5)',
+                        data: values,
+                        backgroundColor: bgColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // 水平柱状图，适合展示长名字
+                    responsive: true,
+                    maintainAspectRatio: false, // 严格适配父容器的高度和宽度
+                    plugins: {
+                        legend: {
+                            display: false // 隐藏图例，用标题说明
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const rawVal = context.raw;
+                                    let levelDesc = "";
+                                    if(rawVal >= 4.5) levelDesc = "平台级高度开放";
+                                    else if(rawVal >= 4) levelDesc = "插件丰富/允许扩展";
+                                    else if(rawVal >= 3) levelDesc = "内部生态联动为主";
+                                    else levelDesc = "自研闭环，专注基础API输出";
+                                    return ` 开放指数: ${rawVal} - ${levelDesc}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 5,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            opennessChartInstance = new Chart(els.chartCanvas, config);
+        }
+
+        // --- 模态框交互逻辑 ---
+
+        function openModal(id) {
+            const data = reportData.find(d => d.id === id);
+            if (!data) return;
+
+            // 填充内容
+            els.modalContent.innerHTML = `
+                <div class="sm:flex sm:items-start pt-2">
+                    <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                        <h3 class="text-2xl font-bold leading-6 text-stone-900 mb-1" id="modal-title">
+                            ${data.company}
+                        </h3>
+                        <p class="text-sm font-medium text-indigo-600 mb-6">${data.coreModel}</p>
+                        
+                        <div class="bg-stone-50 rounded-lg p-4 mb-6 text-sm border border-stone-200">
+                            <p class="mb-2"><span class="font-bold text-stone-700">代表产品：</span> ${data.products}</p>
+                            <p><span class="font-bold text-stone-700">API综合开放度：</span> ${data.apiOpenLevel} / 5</p>
+                        </div>
+                        
+                        <div class="prose prose-sm max-w-none text-stone-800">
+                            ${data.details}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 显示模态框
+            els.modal.classList.remove('hidden');
+            // 防止底层页面滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            els.modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function setupEventListeners() {
+            els.closeBtn.addEventListener('click', closeModal);
+            els.modalBackdrop.addEventListener('click', closeModal);
+            
+            // ESC 键关闭模态框
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !els.modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // 平滑滚动导航
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        }
+
+        // --- 页面加载完成执行 ---
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
