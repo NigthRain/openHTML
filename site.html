@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Hosted Project | 常用网站导航</title>
+    
+    <style>
+        /* 彻底解决页面因滚动条出现/消失导致的抖动 */
+        html {
+            scrollbar-gutter: stable;
+        }
+
+        :root {
+            --primary-color: #333333;
+            --title-color: #4a868a;
+            --bg-color: #ffffff;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --link-color: #3498db;
+            --divider-color: #707070;
+            --btn-bg: #f1f3f4;
+        }
+
+        /* 移除了外部字体，使用系统级后备字体保证排版一致性 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* 导航栏 */
+        nav {
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem 5rem 1rem;
+        }
+
+        /* 折叠区块基础样式 */
+        .project-section {
+            margin-bottom: 3rem;
+        }
+
+        /* 头部：包含标题和按钮 */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.5rem 0;
+        }
+
+        /* 英文大标题：使用紧凑型无衬线系统字体模拟 Oswald 效果 */
+        .section-title {
+            font-family: "Impact", "Arial Narrow", "Helvetica Neue", sans-serif;
+            color: var(--title-color);
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* 切换按钮 */
+        .toggle-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--btn-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s, transform 0.3s ease;
+        }
+
+        .section-header:hover .toggle-btn {
+            background-color: #e8eaed;
+        }
+
+        .toggle-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #5f6368;
+            transition: transform 0.3s ease;
+        }
+
+        /* 展开时的箭头翻转 */
+        .project-section.open .toggle-btn svg {
+            transform: rotate(180deg);
+        }
+
+        /* 分割线 */
+        .section-divider {
+            height: 1px;
+            background-color: var(--divider-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* 折叠内容区（使用 grid 动画实现平滑高度过渡） */
+        .collapsible-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-out;
+        }
+
+        .project-section.open .collapsible-wrapper {
+            grid-template-rows: 1fr;
+        }
+
+        .collapsible-content {
+            overflow: hidden;
+        }
+
+        /* 内部排版 */
+        .subtitle {
+            color: var(--text-main);
+            margin: 0 0 2rem 0;
+            font-size: 1rem;
+        }
+
+        .content-body {
+            display: flex;
+            gap: 2.5rem;
+            align-items: flex-start;
+            padding-bottom: 1rem;
+        }
+
+        .project-image-wrapper {
+            width: 45%;
+            flex-shrink: 0;
+        }
+
+        .project-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            background-color: #f8f9fa;
+        }
+
+        .project-details {
+            flex: 1;
+        }
+
+        .project-details h3 {
+            font-size: 2rem;
+            color: var(--title-color);
+            margin: 0 0 1rem 0;
+            font-weight: 500;
+        }
+
+        .project-details p {
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .project-links a {
+            color: var(--title-color);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-right: 1.5rem;
+        }
+
+        .project-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .content-body {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .project-image-wrapper {
+                width: 100%;
+            }
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/index">HOME</a>
+        <a href="/AI">AI</a>
+        <a href="/selfhosted" class="active" style="color:#000;">Self-Hosted Project</a>
+    </nav>
+
+    <main>
+        
+        <section class="project-section open">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2 class="section-title">DICTATION ASSISTANT</h2>
+                <div class="toggle-btn">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="collapsible-wrapper">
+                <div class="collapsible-content">
+                    <div class="content-body">
+                        <div class="project-image-wrapper">
+                            <img src="https://picsum.photos/seed/dictation/600/400" alt="听写小助手" class="project-image">
+                        </div>
+                        <div class="project-details">
+                            <h3>听写小助手</h3>
+                            <p>一个小学生听写自动化工具，托管在cloudflare。</p>
+                            <div class="project-links">
+                                <a href="https://dictation.de5.net/" target="_blank">https://dictation.de5.net/</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2 class="section-title">SELF-HOSTED STATIC WEBSITE</h2>
+                <div class="toggle-btn">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="collapsible-wrapper">
+                <div class="collapsible-content">
+                    <p class="subtitle">Some tools web pages, based on HTML+JS+CSS, wrote by myself , or Vibe Coding.</p>
+                    <div class="content-body">
+                        <div class="project-image-wrapper">
+                            <img src="https://picsum.photos/seed/tools/600/400" alt="手搓小工具" class="project-image">
+                        </div>
+                        <div class="project-details">
+                            <h3>手搓小工具</h3>
+                            <p>自己编写的一些小工具网页，基于HTML+JS+CSS。Vibe Coding。托管在多个站点。</p>
+                            <div class="project-links">
+                                <a href="https://blog-ah6.pages.dev/" target="_blank">pages.dev</a>
+                                <a href="https://html-seven-mu.vercel.app/" target="_blank">vercel.app</a>
+                                <a href="https://squaremetre.netlify.app/" target="_blank">netlify.app</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2 class="section-title">SELF-HOSTED DOCS WEBSITE</h2>
+                <div class="toggle-btn">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="collapsible-wrapper">
+                <div class="collapsible-content">
+                    <div class="content-body">
+                        <div class="project-image-wrapper">
+                            <img src="https://picsum.photos/seed/docs/600/400" alt="文档托管" class="project-image">
+                        </div>
+                        <div class="project-details">
+                            <h3>文档托管</h3>
+                            <p>Markdown文档托管及展示。本地文档-->github-->网站，提交后自动更新。<br><br>公开版本基于Astro。非公开版本基于Docsify，托管在10.10.10.10。</p>
+                            <div class="project-links">
+                                <a href="http://10.10.10.10/" target="_blank">10.10.10.10</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2 class="section-title">CUSTOM STYLESHEETS</h2>
+                <div class="toggle-btn">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="collapsible-wrapper">
+                <div class="collapsible-content">
+                    <p class="subtitle">Typora Theme, WeChat Media Platform, to ensure consistent document display...</p>
+                    <div class="content-body">
+                        <div class="project-image-wrapper">
+                            <img src="https://picsum.photos/seed/css/600/400" alt="自定义样式表" class="project-image">
+                        </div>
+                        <div class="project-details">
+                            <h3>自定义样式表</h3>
+                            <p>自己编写的样式表，包括Typora/Astro/微信公众号文章，以使本地打开Markdown文档、托管在网站、发布到微信公众号平台时文档表现一致。基于CSS。Vibe Coding。开发中。托管在github。</p>
+                            <div class="project-links">
+                                <a href="#" target="_blank">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2 class="section-title">SELF-HOSTED BOOKMARK</h2>
+                <div class="toggle-btn">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="collapsible-wrapper">
+                <div class="collapsible-content">
+                    <div class="content-body">
+                        <div class="project-image-wrapper">
+                            <img src="https://picsum.photos/seed/bookmark/600/400" alt="网络收藏夹" class="project-image">
+                        </div>
+                        <div class="project-details">
+                            <h3>网络收藏夹</h3>
+                            <p>一个自托管网络收藏夹。通过浏览器插件收藏到RainDrop。Edge-BookMark通过RainDrop的API连接数据库。</p>
+                            <div class="project-links">
+                                <a href="https://tomatocat.edgeone.app/" target="_blank">腾讯云 edgeone</a>
+                                <a href="https://shoucangjia.netlify.app/" target="_blank">netlify.app</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 设置为 true 则开启手风琴模式（打开一个时自动关闭其他）
+        const accordionMode = true;
+
+        function toggleSection(headerElement) {
+            const section = headerElement.closest('.project-section');
+            const isCurrentlyOpen = section.classList.contains('open');
+
+            if (accordionMode && !isCurrentlyOpen) {
+                document.querySelectorAll('.project-section.open').forEach(openedSection => {
+                    if (openedSection !== section) {
+                        openedSection.classList.remove('open');
+                    }
+                });
+            }
+
+            section.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
