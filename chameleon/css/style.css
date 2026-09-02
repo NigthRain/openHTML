@@ -41,7 +41,7 @@ body {
   z-index: 0;
   inset: 0;
   background-color: var(--habitat-bg);
-  background-image: url("../img/generated/widescreen-backdrop-v2.webp");
+  background-image: url("../img/generated/widescreen-backdrop-v3.webp");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -65,7 +65,12 @@ body {
   transform: translate3d(-50%, -50%, 0);
 }
 
-#lottie #border {
+#lottie #border,
+#lottie #bg,
+#lottie #leaf_1,
+#lottie #leaf_2,
+#lottie #leaf_3,
+#lottie #leaf_4 {
   display: none !important;
 }
 
