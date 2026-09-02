@@ -1,33 +1,72 @@
 :root {
   --chame-color: rgba(158, 231, 152, 1);
-  --chame-color-eyes: rgba(158,231,152,1) ;
+  --chame-color-eyes: rgba(158, 231, 152, 1);
+  --habitat-bg: #f1eee7;
+  color-scheme: light;
 }
 
-body,
-html {
-  background-color: rgba(255, 255, 255, 1);
-  margin: 0px;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-#lottie {
-  background-color: rgba(20, 20, 20, 1);
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  display: block;
-  overflow: hidden;
-  transform: translate3d(0, 0, 0);
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-#mouse-container {
+html,
+body {
   width: 100%;
   height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--habitat-bg);
+}
+
+body {
+  min-height: 100svh;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  min-width: 320px;
+  min-height: 320px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--habitat-bg);
+}
+
+.wide-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-color: var(--habitat-bg);
+  background-image: url("../img/generated/widescreen-backdrop-v2.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#mouse-container {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+}
+
+#lottie {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  overflow: hidden;
+  background: transparent;
+  transform: translate3d(-50%, -50%, 0);
+}
+
+#lottie #border {
+  display: none !important;
 }
 
 #mouse-container.active {
@@ -35,26 +74,139 @@ html {
 }
 
 #cursor_preloader {
-    cursor: url(../img/cursor_empty_32.png), url(../img/cursor_empty_32.cur), auto;
   position: absolute;
+  cursor: url(../img/cursor_empty_32.png), url(../img/cursor_empty_32.cur), auto;
+}
+
+#prey-layer {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.prey {
+  --x: -100px;
+  --y: -100px;
+  --tilt: 0deg;
+  --direction: 1;
+  --state-scale: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(36px, 2.65vw, 52px);
+  aspect-ratio: 1;
+  opacity: 0;
+  transform: translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0)
+    rotate(var(--tilt)) scaleX(var(--direction)) scale(var(--state-scale));
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.prey.is-visible {
+  opacity: 1;
+}
+
+.prey.is-targeted {
+  --state-scale: 1.08;
+  filter: saturate(1.08);
+}
+
+.prey.is-caught {
+  animation: prey-caught 360ms cubic-bezier(.65, 0, .9, .45) forwards;
+}
+
+.prey__sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.prey--bee .prey__sprite {
+  animation: wingbeat 150ms ease-in-out infinite alternate;
+}
+
+.prey--mosquito .prey__sprite {
+  animation: wingbeat 105ms ease-in-out infinite alternate-reverse;
+}
+
+.prey--ant {
+  width: clamp(34px, 2.4vw, 48px);
+}
+
+.prey--ant .prey__sprite {
+  animation: ant-step 420ms ease-in-out infinite alternate;
 }
 
 .chameleon_color {
-  stroke: var(--chame-color);
   fill: var(--chame-color);
-  transition: stroke 2s, fill 2s;
+  stroke: var(--chame-color);
+  transition: fill 2s, stroke 2s;
 }
 
 .chameleon_color_eyes {
-  stroke: var(--chame-color-eyes);
   fill: var(--chame-color-eyes);
-  transition: stroke 2s, fill 2s;
+  stroke: var(--chame-color-eyes);
+  transition: fill 2s, stroke 2s;
 }
 
-.mac_hidden .mac_arrow {
-  display: none!important;
-}
-
+.mac_hidden .mac_arrow,
 .default_hidden .default_arrow {
-  display: none!important;
+  display: none !important;
+}
+
+@keyframes wingbeat {
+  from {
+    transform: translateY(-1px) rotate(-1deg) scaleY(.96);
+  }
+  to {
+    transform: translateY(1px) rotate(1deg) scaleY(1.025);
+  }
+}
+
+@keyframes ant-step {
+  from {
+    transform: translateY(0) rotate(-1deg);
+  }
+  to {
+    transform: translateY(-2px) rotate(1deg);
+  }
+}
+
+@keyframes prey-caught {
+  0% {
+    opacity: 1;
+    transform: translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0)
+      rotate(var(--tilt)) scaleX(var(--direction)) scale(1.08);
+  }
+  45% {
+    opacity: .88;
+    transform: translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0)
+      rotate(calc(var(--tilt) + 32deg)) scaleX(var(--direction)) scale(.62);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0)
+      rotate(calc(var(--tilt) + 96deg)) scaleX(var(--direction)) scale(0);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .wide-backdrop {
+    background-size: auto 100%;
+  }
+
+  .prey {
+    width: clamp(32px, 8vw, 46px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prey__sprite {
+    animation: none;
+  }
 }

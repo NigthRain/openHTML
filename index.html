@@ -1,21 +1,28 @@
-﻿<!DOCTYPE html>
-<html lang="en" >
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Chameleon</title>
-
-<link rel="stylesheet" href="chameleon/css/style.css">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1eee7">
+  <title>Chameleon</title>
+  <link rel="preload" href="chameleon/img/generated/widescreen-backdrop-v2.webp" as="image" type="image/webp">
+  <link rel="stylesheet" href="chameleon/css/style.css">
 </head>
 <body>
+  <main id="scene" aria-label="Interactive chameleon habitat">
+    <div class="wide-backdrop" aria-hidden="true"></div>
 
-<div id="mouse-container">
-	<div id="lottie"></div>
-</div>
-<div id="cursor_preloader"></div>
+    <div id="mouse-container">
+      <div id="lottie" aria-hidden="true"></div>
+    </div>
 
-<script type="text/javascript" src='chameleon/js/lottie_light.min.js'></script>
-<script type="text/javascript" src='chameleon/js/lottie_api.minified.js'></script>
-<script type="text/javascript" src="chameleon/js/index.js"></script>
+    <div id="prey-layer" aria-hidden="true"></div>
+    <div id="cursor_preloader" aria-hidden="true"></div>
+  </main>
+
+  <script src="chameleon/js/lottie_light.min.js"></script>
+  <script src="chameleon/js/lottie_api.minified.js"></script>
+  <script src="chameleon/js/index.js"></script>
+  <script src="chameleon/js/ecosystem.js"></script>
 </body>
 </html>

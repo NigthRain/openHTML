@@ -1,6 +1,7 @@
 var chamecolor = "";
 var degToRads = Math.PI / 180;
-var valueArr = [100, 500, 100];
+var valueArr = [window.innerWidth / 2, window.innerHeight / 2, 100];
+var pointerArr = [valueArr[0], valueArr[1], 100];
 var mouse_changed = false;
 var minTongueRadius = 405,
   maxTongueRadius = 415;
@@ -11,6 +12,8 @@ var camouflage_timeout = null;
 var colorSelector = document.querySelector(":root");
 var mouse_container = document.getElementById("mouse-container");
 var animationContainer = document.getElementById("lottie");
+var mouthReferencePath = null;
+var targetOwner = null;
 var isMacLike = navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i)?true:false;
 
 animationContainer.setAttribute('class',isMacLike ? 'default_hidden' : 'mac_hidden')
@@ -22,9 +25,9 @@ var animData = {
   rendererSettings: {
     preserveAspectRatio: "xMidYMid meet"
   },
-  path: "https://labs.nearpod.com/bodymovin/demo/chameleon/chameleon2.json"
+  path: "chameleon/chameleon2.json"
 };
-anim = lottie.loadAnimation(animData);
+var anim = lottie.loadAnimation(animData);
 var animationAPI;
 
 var leftEyeCircles = [
@@ -143,6 +146,8 @@ anim.addEventListener("DOMLoaded", function() {
         }, 1000);
 
   animationAPI = lottie_api.createAnimationApi(anim);
+  animationAPI.recalculateSize();
+  mouthReferencePath = animationAPI.getKeyPath("Mouth,ReferencePoint");
 
   window.addEventListener("mousemove", updateValue);
   window.addEventListener("touchmove", updateValue);
@@ -153,6 +158,10 @@ anim.addEventListener("DOMLoaded", function() {
   addArrowProperties();
   addEyeCircles();
   addLeavesListeners();
+  window.chameleonController = createChameleonController();
+  window.dispatchEvent(new CustomEvent("chameleon:ready", {
+    detail: window.chameleonController
+  }));
 });
 
 function addEyeCircleProperty(circleData, eye, cachedMouseEyeData) {
@@ -272,7 +281,6 @@ function addLeavesListeners() {
 }
 
 function addMouthProperties() {
-  var keyPathMouthInner = animationAPI.getKeyPath("Mouth,ReferencePoint");
   var keyPathMouthContainerTimeRemap = animationAPI.getKeyPath(
     "Mouth,Time Remap"
   );
@@ -282,7 +290,7 @@ function addMouthProperties() {
   ) {
     if (!isActive && mouse_changed) {
       var point2 = animationAPI.toContainerPoint(valueArr);
-      point2 = animationAPI.toKeypathLayerPoint(keyPathMouthInner, point2);
+      point2 = animationAPI.toKeypathLayerPoint(mouthReferencePath, point2);
       angle = Math.atan2(0 - point2[1], 0 - point2[0]) / degToRads + 170;
       distanceToMouse = Math.sqrt(
         Math.pow(0 - point2[0], 2) + Math.pow(0 - point2[1], 2)
@@ -350,11 +358,17 @@ function addTongueProperties() {
     tongueInitialAnimationTime = Date.now() - 1500 / 30;
     isActive = true;
     mouse_container.setAttribute("class", "active");
+    window.dispatchEvent(new CustomEvent("chameleon:tongue-start", {
+      detail: { owner: targetOwner }
+    }));
   }
 
   function resetTongue() {
     isActive = false;
     mouse_container.setAttribute("class", "");
+    window.dispatchEvent(new CustomEvent("chameleon:tongue-end", {
+      detail: { owner: targetOwner }
+    }));
   }
   var keyPathTongueContainerTimeRemap = animationAPI.getKeyPath(
     "Mouth,Tongue_Comp,Time Remap"
@@ -388,17 +402,24 @@ function addTongueProperties() {
 }
 
 function updateValue(ev) {
-  mouse_changed = true;
   var mouseX, mouseY;
   if (ev.touches && ev.touches.length) {
-    var mouseX = ev.touches[0].pageX;
-    var mouseY = ev.touches[0].pageY;
-  } else if (ev.pageX !== undefined) {
-    mouseX = ev.pageX;
-    mouseY = ev.pageY;
+    mouseX = ev.touches[0].clientX;
+    mouseY = ev.touches[0].clientY;
+  } else if (ev.clientX !== undefined) {
+    mouseX = ev.clientX;
+    mouseY = ev.clientY;
   }
-  valueArr[0] = mouseX;
-  valueArr[1] = mouseY;
+  if (mouseX === undefined || mouseY === undefined) {
+    return;
+  }
+  pointerArr[0] = mouseX;
+  pointerArr[1] = mouseY;
+  if (!targetOwner) {
+    valueArr[0] = mouseX;
+    valueArr[1] = mouseY;
+    mouse_changed = true;
+  }
 }
 
 function onWindowResized() {
@@ -406,4 +427,51 @@ function onWindowResized() {
     anim.resize();
     animationAPI.recalculateSize();
   }
+}
+
+function getMouthPoint() {
+  if (!animationAPI || !mouthReferencePath) {
+    return null;
+  }
+  var containerPoint = animationAPI.fromKeypathLayerPoint(mouthReferencePath, [0, 0, 0]);
+  var screenPoint = animationAPI.fromContainerPoint(containerPoint);
+  return { x: screenPoint[0], y: screenPoint[1] };
+}
+
+function getTongueReach() {
+  if (!animationAPI) {
+    return 0;
+  }
+  var scaleData = animationAPI.getScaleData();
+  return scaleData ? (minTongueRadius + maxTongueRadius) / 2 * scaleData.scale : 0;
+}
+
+function createChameleonController() {
+  return {
+    getMouthPoint: getMouthPoint,
+    getReach: getTongueReach,
+    isBusy: function() {
+      return isActive || Boolean(targetOwner);
+    },
+    setTarget: function(x, y, owner) {
+      if (!owner || (targetOwner && targetOwner !== owner)) {
+        return false;
+      }
+      targetOwner = owner;
+      valueArr[0] = x;
+      valueArr[1] = y;
+      mouse_changed = true;
+      return true;
+    },
+    releaseTarget: function(owner) {
+      if (targetOwner !== owner) {
+        return false;
+      }
+      targetOwner = null;
+      valueArr[0] = pointerArr[0];
+      valueArr[1] = pointerArr[1];
+      mouse_changed = true;
+      return true;
+    }
+  };
 }
